@@ -1,35 +1,14 @@
 ;(function (window) {
-	
-	const todos = [
-		{
-			id:1,
-			title:'吃饭',
-			done:true
-		},
-		{
-			id:2,
-			title:'睡觉',
-			done:false
-		},
-		{
-			id:3,
-			title:'打豆豆',
-			done:true
-		},
-		{
-			id:4,
-			title:'陪老婆',
-			done:false
-		}
-	]
-
-	new Vue({
+	const todos = JSON.parse(window.localStorage.getItem('todos'))||[];
+	const app = new Vue({
 		el:'#todoapp',
 		data:{
 			todos, //任务类表数据源
 			inputText:'',//用于获取添加任务文本框的数据
 			currentEdit:null,//用于判断任务项是否获得editing样式的一个标记量
 			backTitle:'',//用于备份编辑之前的任务项的title 编辑前先备份，取消编辑后回退
+			filterTodos:[],// 取决于你点击了谁？  all completed active
+			hash:''
 		},
 		methods:{
 			// 添加功能
@@ -77,8 +56,81 @@
 			cancelEdit(){
 				this.currentEdit.title = this.backTitle
 				this.currentEdit = null
+			},
+			// 删除所有已完成项
+			clearAllDone(){
+				this.todos = this.todos.filter(item=>!item.done)
+			},
+			// 切换所有任务项的选中状态
+			// toggleAll(e){
+			// 	const {checked} = e.target
+			// 	this.todos.forEach(item => {
+			// 		item.done = checked
+			// 	});
+			// }
+		},
+		// 使用计算属性来计算未完成任务数
+		// 计算属性和方法唯一的区别是：
+		// 	计算属性会把计算的结果进行缓存
+		// 	如果多次使用该计算属性，实际上只调用了一次
+		// 	而方式的话，每使用一次就调用一次
+		// 所以在有多次使用的场景下，最好使用计算属性
+		computed:{
+			getRemaining(){
+				return todos.filter(item=>!item.done).length
+			},
+			// 切换所有任务项的选中状态
+			toggleAllStat:{
+				get(){
+					// every方法 会对每一个元素执行条件判断
+					// 如果每个元素.done == true  every方法返回true
+					// 只要其中某个元素.done == false  则every方法返回false
+					const toggleAll = this.todos.every(item=>{
+						return item.done === true
+					})
+					return toggleAll
+				},
+				set(val){
+					this.todos.forEach(item => {
+						item.done = val
+					});
+				}
+			}
+		},
+		watch:{
+			// todos(){
+			// 	// 默认状态下，只能监听对象或者数组的一层数据，如果需要五级后代监视，则需要配置为深度监听
+			// 	console.log('todos 发生了改变')
+			// }
+			todos:{
+				handler:function(){
+					window.localStorage.setItem('todos',JSON.stringify(this.todos))
+				},
+				deep:true
 			}
 		}
 	})
-
+	window.app = app
+	window.onhashchange = ()=>{
+		const {hash} = window.location
+		app.hash = hash
+		switch(hash){
+			case "#/":
+				app.filterTodos = app.todos
+				break
+			case "#/active":
+				app.filterTodos = app.todos.filter((item)=>{
+					return item.done === false
+				})
+				break
+			case "#/completed":
+				app.filterTodos = app.todos.filter((item)=>{
+					return item.done === true
+				})
+				break
+		}
+	}
+	// hash 只有在改变的时候才执行
+	// 所以需要页面在第一次进来的时候，默认显示全部
+	window.location =  "#/"
 })(window);

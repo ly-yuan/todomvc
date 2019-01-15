@@ -1,5 +1,15 @@
 ;(function (window) {
-	const todos = JSON.parse(window.localStorage.getItem('todos'))||[];
+	const todos = JSON.parse(window.localStorage.getItem('todos')||"[]");
+
+	// 初始化时，自动获取焦点
+	Vue.directive('focus',{
+		// 当被绑定的元素插入到 DOM 中时
+		inserted:function(el){
+			console.log(el)
+			// 聚焦元素
+			el.focus()
+		}
+	})
 	const app = new Vue({
 		el:'#todoapp',
 		data:{
@@ -32,8 +42,12 @@
 				this.inputText = ''
 			},
 			//删除单个任务项
-			removeTodo(index){
-				todos.splice(index,1)
+			removeTodo(item){
+				// todos.splice(index,1)
+				const index = this.todos.findIndex(t=>t.id == item.id)
+				if(index !== -1){
+					this.todos.splice(index,1)
+				}
 			},
 			// 双击编辑功能
 			getEditing(item){
@@ -60,6 +74,17 @@
 			// 删除所有已完成项
 			clearAllDone(){
 				this.todos = this.todos.filter(item=>!item.done)
+	
+				// const todos = this.todos
+				// for (let i = 0; i < todos.length; i++) {
+				// 	if (todos[i].done === true) {
+				// 		// 执行删除操作
+				// 		todos.splice(i, 1)
+
+				// 		// 让索引倒退一次，防止有漏网之鱼
+				// 		i--
+				// 	}
+				// }
 			},
 			// 切换所有任务项的选中状态
 			// toggleAll(e){
@@ -76,8 +101,8 @@
 		// 	而方式的话，每使用一次就调用一次
 		// 所以在有多次使用的场景下，最好使用计算属性
 		computed:{
-			getRemaining(){
-				return todos.filter(item=>!item.done).length
+			remaining(){
+				return this.todos.filter(item=>!item.done).length
 			},
 			// 切换所有任务项的选中状态
 			toggleAllStat:{
@@ -105,8 +130,19 @@
 			todos:{
 				handler:function(){
 					window.localStorage.setItem('todos',JSON.stringify(this.todos))
+					window.onhashchange()
 				},
 				deep:true
+			}
+		},
+		directives:{
+			// 双击进入编辑状态后，自动获取焦点
+			'todo-focus':{
+				update(el,binding){
+					if(binding.value){
+						el.focus()
+					}
+				}
 			}
 		}
 	})
@@ -128,9 +164,14 @@
 					return item.done === true
 				})
 				break
+			default:
+				app.hash = '#/'
+				app.filterTodos = app.todos
+				break
 		}
 	}
 	// hash 只有在改变的时候才执行
 	// 所以需要页面在第一次进来的时候，默认显示全部
-	window.location =  "#/"
+	// window.location =  "#/"
+	window.onhashchange()
 })(window);

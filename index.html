@@ -17,7 +17,8 @@
 					class="new-todo" 
 					placeholder="What needs to be done?" 
 					v-model="inputText"
-					@keydown.enter="addTodo">
+					@keydown.enter="addTodo"
+					v-focus>
 			</header>
 			<!-- 
 				<template> 标签可以和 v-if 结合使用，渲染结果不会包含该标签
@@ -59,14 +60,15 @@
 									@dblclick="getEditing(item)">{{item.title}}</label>
 								<button 
 									class="destroy"
-									@click="removeTodo(index)"></button>
+									@click="removeTodo(item)"></button>
 							</div>
 							<input
 								class="edit"
 								v-model="item.title"
 								@keyup.enter="saveEdit(item, index)"
 								@blur="saveEdit(item, index)"
-								@keyup.esc="cancelEdit">
+								@keyup.esc="cancelEdit"
+								v-todo-focus="currentEdit == item">
 						</li>
 					
 					</ul>
@@ -75,7 +77,7 @@
 				<footer class="footer">
 					<!-- This should be `0 items left` by default -->
 					<span class="todo-count">
-						<strong>{{getRemaining}}</strong> item left</span>
+						<strong>{{remaining}}</strong> item left</span>
 					<!-- Remove this if you don't implement routing -->
 					<ul class="filters">
 						<li>
